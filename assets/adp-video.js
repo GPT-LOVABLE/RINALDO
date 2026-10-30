@@ -2,30 +2,22 @@
   'use strict';
 
   var SCENES = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+  var NARRATION = window.NARRATION || [];
 
-  var TITLES = [
-    'Introdução',
-    '1 · E-mail de ativação',
-    '2 · Preencha os dados',
-    '3 · Verificação de segurança',
-    '4 · Usuário e senha',
-    '5 · Confirmação',
-    '6 · Acesse o portal',
-    'Contato do RH'
-  ];
+  var TITLES = NARRATION.map(function (n) { return n.title; });
+  var SCRIPTS = NARRATION.map(function (n) { return n.script; });
 
-  var DURATIONS = [9000, 16000, 16000, 15000, 16000, 14000, 17000, 12000];
+  /* valores iguais aos do MP4 gerado (narração + respiro), ver tools/video-render */
+  var DURATIONS = [9082, 9280, 10394, 8026, 10151, 9419, 12693, 15120];
 
-  var SCRIPTS = [
-    'RH Informa: atualização de uso do ADP. A VARD utiliza a plataforma ADP para o seu acesso. Acompanhe os seis passos para atualizar o seu cadastro.',
-    'Passo um: receba o e-mail de ativação. A mensagem chega de security services noreply, do domínio ADP. Abra o e-mail e clique no botão Inscreva-se agora.',
-    'Passo dois: preencha as informações solicitadas. Informe nome completo, CPF, data de nascimento, telefone e e-mail. Ao finalizar o preenchimento, clique em Continuar.',
-    'Passo três: realize a verificação de segurança. Escolha a opção SMS, informe o código recebido no celular e clique em Continuar.',
-    'Passo quatro: crie seu usuário e senha. Defina o seu ID de usuário e uma senha com letra minúscula, maiúscula, número e símbolo. Aceite os termos e clique em Criar conta.',
-    'Passo cinco: confirmação do cadastro. Ao concluir o processo, será exibida a mensagem de que sua conta foi criada com sucesso. Guarde o seu ID de usuário.',
-    'Passo seis: acesse o portal ADP. Com o cadastro concluído, use o seu ID de usuário e senha no link expert.hcm.adp.com barra adpweb, ou leia o QR code com o celular.',
-    'Em caso de dúvidas, procure o RH: atendimento presencial de segunda a sexta, das onze e vinte ao meio-dia e vinte, ou pelo WhatsApp, oitenta e um, nove nove oito quatro cinco, três dois zero zero.'
-  ];
+  var params = new URLSearchParams(window.location.search);
+  var RENDER = params.get('render') === '1';
+
+  /* ?d=12000,9000,... fixa a duração de cada cena (usado na gravação do MP4) */
+  if (params.get('d')) {
+    var custom = params.get('d').split(',').map(Number);
+    if (custom.length === SCENES.length && custom.every(function (v) { return v > 0; })) DURATIONS = custom;
+  }
 
   var TOTAL = DURATIONS.reduce(function (a, b) { return a + b; }, 0);
   var CUM = DURATIONS.map(function (_, i) {
@@ -57,7 +49,7 @@
   var startedAt = 0;
   var raf = 0;
   var finished = false;
-  var voiceOn = true;
+  var voiceOn = !RENDER;
 
   /* ---------- tela cheia / escala ---------- */
   function fit() {
@@ -215,7 +207,10 @@
     chaptersBox.appendChild(b);
 
     var li = document.createElement('li');
-    li.textContent = SCRIPTS[i];
+    var faixa = document.createElement('b');
+    faixa.textContent = fmt(CUM[i]) + '–' + fmt(CUM[i] + DURATIONS[i]) + ' · ';
+    li.appendChild(faixa);
+    li.appendChild(document.createTextNode(SCRIPTS[i]));
     scriptList.appendChild(li);
   });
 
@@ -272,4 +267,25 @@
 
   render(0);
   fit();
+
+  /* Gravação do MP4 (tools/video-render): palco 1280x720 sem controles e
+     __renderFrame(ms) congela a cena no instante pedido, para gravar quadro a quadro. */
+  if (RENDER) {
+    document.body.classList.add('is-render');
+    poster.classList.add('hidden');
+    fit();
+    window.__renderFrame = function (ms) {
+      var i = 0;
+      while (i < CUM.length - 1 && CUM[i + 1] <= ms) i++;
+      render(i);
+      void document.body.offsetHeight;
+      var local = Math.max(0, ms - CUM[i]);
+      var anims = document.getAnimations ? document.getAnimations() : [];
+      anims.forEach(function (a) {
+        try { a.pause(); a.currentTime = local; } catch (e) { /* animação já descartada */ }
+      });
+      return i;
+    };
+    window.__renderFrame(0);
+  }
 })();

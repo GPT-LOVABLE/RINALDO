@@ -20,6 +20,16 @@ body{
 .vard{font-size:22px;font-weight:900;letter-spacing:.04em;color:var(--red)}
 .pill{background:var(--red);color:#fff;font-size:12px;font-weight:800;letter-spacing:.04em;padding:6px 12px;border-radius:999px}
 .page-head h1{margin:0;font-size:14px;font-weight:600;color:#5d6b78}
+.dl{margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;font-size:13px;font-weight:800;text-decoration:none;padding:9px 16px;border-radius:999px;box-shadow:0 8px 18px rgba(0,86,150,.22)}
+.dl:hover{background:#004a80}
+
+/* modo gravação (tools/video-render): só o palco 16:9 */
+body.is-render{background:#fff}
+body.is-render .wrap{max-width:none;padding:0}
+body.is-render .page-head,body.is-render .controls,body.is-render .chapters,body.is-render .script{display:none}
+body.is-render .player{border-radius:0;box-shadow:none}
+body.is-render .stage{width:1280px;height:720px;aspect-ratio:auto}
+body.is-render .poster{display:none}
 
 /* ---------- player ---------- */
 .player{position:relative;background:#0a1926;border-radius:18px;overflow:hidden;box-shadow:0 20px 48px rgba(10,32,50,.22)}
@@ -217,3 +227,4 @@ body{
 .script{margin-top:18px;background:#fff;border:1px solid #e2e8ee;border-radius:14px;padding:14px 18px}
 .script summary{cursor:pointer;font-weight:800;color:var(--blue);font-size:14px}
 .script ol{margin:12px 0 0;padding-left:20px;color:#4d5a67;font-size:13.5px;line-height:1.55;display:grid;gap:8px}
+.script ol b{color:var(--blue);font-weight:800;font-variant-numeric:tabular-nums}
